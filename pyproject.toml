@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'trading_helpers'
+requires-python = ">= 3.12"
+version = "0.1"
+dependencies = [
+    'aiofiles',
+    'holidays'
+]
+description = "Package with basic schemas and absctractions for different trading APIs"
+
+
