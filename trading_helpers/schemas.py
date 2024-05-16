@@ -1,15 +1,33 @@
+from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime, date
 from collections import UserList
-from typing import Self, Literal
+from enum import IntEnum
+from typing import Self, Literal, Type
 
 from trading_helpers.exceptions import IncorrectDatetimeConsistency
 
 MathOperation = Literal['__add__', '__sub__', '__mul__', '__truediv__']
 
 
+class CandleInterval(IntEnum):
+    MIN_1 = -1
+    MIN_2 = -2
+    MIN_3 = -3
+    MIN_5 = -5
+    MIN_10 = -10
+    MIN_15 = -15
+    MIN_30 = -30
+    HOUR = -60
+    HOUR_2 = -120
+    HOUR_4 = -240
+    DAY = -1440
+    WEEK = -10080
+    MONTH = -302400
+
+
 @dataclass(frozen=True)
-class _Candle:
+class _Candle(ABC):
     open: float
     high: float
     low: float
@@ -68,7 +86,7 @@ class _Candle:
         )
 
 
-class _Candles(UserList[_Candle]):
+class _Candles(UserList[_Candle], ABC):
     HOLIDAYS: list[date]
 
     def check_datetime_consistency(self) -> None:
@@ -139,3 +157,7 @@ class _Candles(UserList[_Candle]):
 
     def __truediv__(self, other: Self) -> Self:
         return self._do_math_operation(func_name='__truediv__', other=other)
+
+
+AnyCandle = Type[_Candle]
+AnyCandles = Type[_Candles]
