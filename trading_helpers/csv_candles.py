@@ -22,19 +22,43 @@ Interval = TypeVar('Interval')
 
 
 class _CSVCandles(ABC):
+    # CANDLE: ClassVar[AnyCandle]
+    # CANDLES: ClassVar[AnyCandles]
+    # COLUMNS: ClassVar[tuple]
     DELIMITER = ';'
     NEW_LINE = '\n'
-    CANDLE: ClassVar[AnyCandle]
-    CANDLES: ClassVar[AnyCandles]
-    COLUMNS: ClassVar[tuple]
 
-    def __init__(self, filepath: Path, interval: Interval):
-        self.filepath = filepath
+    def __init__(self, instrument_id: str, interval: Interval):
+        self.instrument_id = instrument_id
         self.interval = interval
 
     @classmethod
+    @property
     @abstractmethod
-    def get_filepath(cls, *args, **kwargs) -> Path:
+    def CANDLE(cls) -> AnyCandle:
+        raise NotImplementedError
+
+    @classmethod
+    @property
+    @abstractmethod
+    def CANDLES(cls) -> AnyCandles:
+        raise NotImplementedError
+
+    @classmethod
+    @property
+    @abstractmethod
+    def COLUMNS(cls) -> tuple:
+        raise NotImplementedError
+
+    @classmethod
+    @property
+    @abstractmethod
+    def DIR_API(cls) -> str:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def filepath(self) -> Path:
         raise NotImplementedError
 
     @classmethod
@@ -44,7 +68,7 @@ class _CSVCandles(ABC):
 
     @classmethod
     @abstractmethod
-    def configure_datetime_from(cls, from_: datetime, **kwargs) -> datetime:
+    def configure_datetime_range(cls, from_: datetime, **kwargs) -> datetime:
         raise NotImplementedError
 
     @classmethod
@@ -54,65 +78,13 @@ class _CSVCandles(ABC):
 
     @classmethod
     @abstractmethod
-    async def download_or_read(cls) -> AnyCandles:
+    async def download_candles(cls, *args, **kwargs) -> AnyCandles:
         raise NotImplementedError
 
-    # @classmethod
-    # async def download_or_read(
-    #         cls,
-    #         instrument_id: str,
-    #         from_: datetime,
-    #         to: datetime,
-    #         interval: Interval,
-    # ) -> AnyCandles:
-    #     candles = None
-    #     from_ = cls.configure_datetime_from(from_=from_, instrument=instrument)
-    #
-    #     filepath = cls.get_filepath(instrument, interval=interval)
-    #     csv = cls(filepath, interval=interval)
-    #
-    #     if not filepath.exists():
-    #         logging.debug(f'File not exists | {instrument_id=}')
-    #         await csv._prepare_new()
-    #         candles = await get_candles(instrument_id=instrument.uid, from_=from_, to=to, interval=interval)
-    #         await csv._append(candles)
-    #         return candles
-    #
-    #     for retry in range(1, 4):
-    #         try:
-    #             return await csv._read(from_=from_, to=to, interval=interval)
-    #         except CSVCandlesNeedAppend as ex:
-    #             logging.debug(f'Need append | {retry=} | ticker={instrument.ticker} | uid={instrument.uid} | from_temp='
-    #                           f'{dt_form_sys.datetime_strf(ex.from_temp)} | to={dt_form_sys.datetime_strf(to)}')
-    #             # 1st candle in response is last candle in file
-    #             candles = (await get_candles(instrument_id=instrument.uid, from_=ex.from_temp, to=to, interval=interval))[1:]
-    #
-    #             if not candles or (len(candles) == 1 and candles[0].is_complete is False):
-    #                 to = ex.candles[-1].dt if to > ex.candles[-1].dt else to
-    #
-    #             if candles:
-    #                 candles = candles if candles[-1].is_complete else candles[:-1]
-    #                 await csv._append(candles)
-    #         except CSVCandlesNeedInsert as ex:
-    #             logging.debug(f'Need insert | {retry=} | ticker={instrument.ticker} | uid={instrument.uid} |'
-    #                           f' from={dt_form_sys.datetime_strf(from_)} | '
-    #                           f'to_temp={dt_form_sys.datetime_strf(ex.to_temp)}')
-    #             if retry == 3:
-    #                 raise IncorrectFirstCandle(f'{candles[0].dt=} | {from_=}')
-    #
-    #             candles = await get_candles(instrument_id=instrument.uid, from_=from_, to=ex.to_temp, interval=interval)
-    #             # 1st candle in file is last candle in get_candles response
-    #             candles = candles[:-1]
-    #
-    #             if candles:
-    #                 await csv._insert(candles[:-1])
-    #             else:
-    #                 logging.debug(f'Nothing between from_={dt_form_sys.datetime_strf(from_)} and to_temp='
-    #                               f'{dt_form_sys.datetime_strf(ex.to_temp)}')
-    #                 from_ = ex.to_temp
-    #         except Exception as ex:
-    #             logging.error(f'{retry=} | {csv.filepath} | {instrument.ticker=}\n{ex}', exc_info=True)
-    #             raise ex
+    @classmethod
+    @abstractmethod
+    async def download_or_read(cls, *args, **kwargs) -> AnyCandles:
+        raise NotImplementedError
 
     async def _read(self, from_: datetime, to: datetime, interval: CandleInterval) -> AnyCandles:
         candles = self.CANDLES()

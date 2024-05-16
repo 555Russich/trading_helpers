@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, date
 from collections import UserList
 from enum import IntEnum
-from typing import Self, Literal, Type
+from typing import Self, Literal, TypeVar
 
 from trading_helpers.exceptions import IncorrectDatetimeConsistency
 
@@ -159,5 +159,5 @@ class _Candles(UserList[_Candle], ABC):
         return self._do_math_operation(func_name='__truediv__', other=other)
 
 
-AnyCandle = Type[_Candle]
-AnyCandles = Type[_Candles]
+AnyCandle = TypeVar('AnyCandle', bound=_Candle)
+AnyCandles = TypeVar('AnyCandles', bound=_Candles)
