@@ -70,7 +70,7 @@ class _CSVCandles(ABC):
                         interval == CandleInterval.MIN_1 and dt_delta > timedelta(minutes=1+1) or
                         interval == CandleInterval.MIN_5 and dt_delta > timedelta(minutes=5+1) or
                         interval == CandleInterval.HOUR and dt_delta > timedelta(minutes=60+1)
-                ) or (candle.dt.date() < to.date() and interval == CandleInterval.DAY)):
+                ) or candle.dt.date() < to.date()):
                     raise CSVCandlesNeedAppend(from_temp=candle.dt, candles=candles)
         return candles
 
