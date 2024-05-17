@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, ClassVar
 
 import aiofiles
 
@@ -23,38 +23,14 @@ class _CSVCandles(ABC):
     DELIMITER = ';'
     NEW_LINE = '\n'
 
+    CANDLE = ClassVar[AnyCandle]
+    CANDLES = ClassVar[AnyCandles]
+    COLUMNS: dict[str, Callable]
+    DIR_API: Path
+
     def __init__(self, instrument_id: str, interval: Interval):
         self.instrument_id = instrument_id
         self.interval = self.convert_candle_interval(interval)
-
-    @classmethod
-    @property
-    @abstractmethod
-    def CANDLE(cls) -> AnyCandle:
-        raise NotImplementedError
-
-    @classmethod
-    @property
-    @abstractmethod
-    def CANDLES(cls) -> AnyCandles:
-        raise NotImplementedError
-
-    @classmethod
-    @property
-    @abstractmethod
-    def COLUMNS(cls) -> dict[str, Callable]:
-        raise NotImplementedError
-
-    @classmethod
-    @property
-    @abstractmethod
-    def DIR_API(cls) -> Path:
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def row2candle(cls, row: list[float | int | datetime]) -> AnyCandle:
-        raise NotImplementedError
 
     @classmethod
     @abstractmethod
@@ -78,13 +54,9 @@ class _CSVCandles(ABC):
 
         for i, row in enumerate(data[1:], start=1):
             str_values = row.replace(self.NEW_LINE, '').split(self.DELIMITER)
-            values = []
+            candle_dict = {self.COLUMNS[c]: self.COLUMNS[c](v) for c, v in zip(self.COLUMNS, str_values)}
+            candle = self.CANDLE(**candle_dict)
 
-            for column, value in zip(self.COLUMNS.keys(), str_values):
-                func_convert = self.COLUMNS[column]
-                values.append(func_convert(value))
-
-            candle = self.row2candle(values)
             if from_ <= candle.dt <= to:
                 candles.append(candle)
 
@@ -110,9 +82,7 @@ class _CSVCandles(ABC):
             return
 
         data = self.NEW_LINE.join(
-            self.DELIMITER.join(
-                str(v) for v in (candle.open, candle.high, candle.low, candle.close, candle.volume, candle.dt)
-            ) for candle in candles
+            self.DELIMITER.join(str(c.__dict__[k]) for k in self.COLUMNS) for c in candles
         ) + self.NEW_LINE
 
         async with aiofiles.open(self.filepath, 'a') as f:
