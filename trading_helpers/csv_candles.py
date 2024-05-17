@@ -30,7 +30,7 @@ class _CSVCandles(ABC):
 
     def __init__(self, instrument_id: str, interval: Interval):
         self.instrument_id = instrument_id
-        self.interval = interval
+        self.interval = self.convert_candle_interval(interval)
 
     @classmethod
     @property

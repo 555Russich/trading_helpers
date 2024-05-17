@@ -2,28 +2,27 @@ from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime, date
 from collections import UserList
-from enum import IntEnum
+from enum import StrEnum, auto
 from typing import Self, Literal, TypeVar
 
-from trading_helpers.exceptions import IncorrectDatetimeConsistency
 
 MathOperation = Literal['__add__', '__sub__', '__mul__', '__truediv__']
 
 
-class CandleInterval(IntEnum):
-    MIN_1 = -1
-    MIN_2 = -2
-    MIN_3 = -3
-    MIN_5 = -5
-    MIN_10 = -10
-    MIN_15 = -15
-    MIN_30 = -30
-    HOUR = -60
-    HOUR_2 = -120
-    HOUR_4 = -240
-    DAY = -1440
-    WEEK = -10080
-    MONTH = -302400
+class CandleInterval(StrEnum):
+    MIN_1 = auto()
+    MIN_2 = auto()
+    MIN_3 = auto()
+    MIN_5 = auto()
+    MIN_10 = auto()
+    MIN_15 = auto()
+    MIN_30 = auto()
+    HOUR = auto()
+    HOUR_2 = auto()
+    HOUR_4 = auto()
+    DAY = auto()
+    WEEK = auto()
+    MONTH = auto()
 
 
 @dataclass(frozen=True)
@@ -90,6 +89,8 @@ class _Candles(UserList[_Candle], ABC):
     HOLIDAYS: list[date]
 
     def check_datetime_consistency(self) -> None:
+        from trading_helpers.exceptions import IncorrectDatetimeConsistency
+
         for i in range(1, len(self)):
             if self[i-1].dt > self[i].dt:
                 raise IncorrectDatetimeConsistency(f'Previous candle datetime value later than previous candle has: '
