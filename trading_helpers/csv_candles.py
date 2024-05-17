@@ -76,7 +76,7 @@ class _CSVCandles(ABC):
         async with aiofiles.open(self.filepath, 'r') as f:
             data = await f.readlines()
 
-        for i, row in enumerate(data[1:]):
+        for i, row in enumerate(data[1:], start=1):
             str_values = row.replace(self.NEW_LINE, '').split(self.DELIMITER)
             values = []
 
