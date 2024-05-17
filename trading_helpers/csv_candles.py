@@ -28,9 +28,13 @@ class _CSVCandles(ABC):
     COLUMNS: dict[str, Callable]
     DIR_API: Path
 
-    def __init__(self, instrument_id: str, interval: Interval):
+    def __init__(self, instrument_id: str, interval: Interval | CandleInterval):
         self.instrument_id = instrument_id
-        self.interval = self.convert_candle_interval(interval)
+
+        if not isinstance(interval, CandleInterval):
+            self.interval = self.convert_candle_interval(interval)
+        else:
+            self.interval = interval
 
     @classmethod
     @abstractmethod
@@ -65,15 +69,12 @@ class _CSVCandles(ABC):
                     raise CSVCandlesNeedInsert(to_temp=candle.dt)
             if i == len(data) - 1 and candle.dt < to:
                 dt_delta = to - candle.dt
-                if (
-                        (
-                                candle.dt.date() == to.date() and
-                                interval == CandleInterval.MIN_1 and dt_delta > timedelta(minutes=1+1) or
-                                interval == CandleInterval.MIN_5 and dt_delta > timedelta(minutes=5+1) or
-                                interval == CandleInterval.HOUR and dt_delta > timedelta(minutes=60+1)
-                        ) or
-                        (candle.dt.date() < to.date() and interval == CandleInterval.DAY)
-                ):
+                if ((
+                        candle.dt.date() == to.date() and
+                        interval == CandleInterval.MIN_1 and dt_delta > timedelta(minutes=1+1) or
+                        interval == CandleInterval.MIN_5 and dt_delta > timedelta(minutes=5+1) or
+                        interval == CandleInterval.HOUR and dt_delta > timedelta(minutes=60+1)
+                ) or (candle.dt.date() < to.date() and interval == CandleInterval.DAY)):
                     raise CSVCandlesNeedAppend(from_temp=candle.dt, candles=candles)
         return candles
 
