@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import ClassVar, TypeVar, Callable
-import logging
+from typing import TypeVar, Callable
 
 import aiofiles
 
@@ -12,7 +11,6 @@ from trading_helpers.schemas import (
     AnyCandles,
 )
 from trading_helpers.exceptions import (
-    IncorrectFirstCandle,
     CSVCandlesNeedAppend,
     CSVCandlesNeedInsert,
 )
@@ -47,6 +45,12 @@ class _CSVCandles(ABC):
     def COLUMNS(cls) -> dict[str, Callable]:
         raise NotImplementedError
 
+    @classmethod
+    @property
+    @abstractmethod
+    def DIR_API(cls) -> Path:
+        raise NotImplementedError
+
     @property
     @abstractmethod
     def filepath(self) -> Path:
@@ -55,11 +59,6 @@ class _CSVCandles(ABC):
     @classmethod
     @abstractmethod
     def row2candle(cls, row: list[float | int | datetime]) -> AnyCandle:
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def configure_datetime_range(cls, from_: datetime, **kwargs) -> datetime:
         raise NotImplementedError
 
     @classmethod
