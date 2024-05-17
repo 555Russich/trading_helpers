@@ -54,7 +54,7 @@ class _CSVCandles(ABC):
 
         for i, row in enumerate(data[1:], start=1):
             str_values = row.replace(self.NEW_LINE, '').split(self.DELIMITER)
-            candle_dict = {self.COLUMNS[c]: self.COLUMNS[c](v) for c, v in zip(self.COLUMNS, str_values)}
+            candle_dict = {c: self.COLUMNS[c](v) for c, v in zip(self.COLUMNS, str_values)}
             candle = self.CANDLE(**candle_dict)
 
             if from_ <= candle.dt <= to:
