@@ -51,11 +51,6 @@ class _CSVCandles(ABC):
     def DIR_API(cls) -> Path:
         raise NotImplementedError
 
-    @property
-    @abstractmethod
-    def filepath(self) -> Path:
-        raise NotImplementedError
-
     @classmethod
     @abstractmethod
     def row2candle(cls, row: list[float | int | datetime]) -> AnyCandle:
@@ -70,6 +65,10 @@ class _CSVCandles(ABC):
     @abstractmethod
     async def download_or_read(cls, *args, **kwargs) -> AnyCandles:
         raise NotImplementedError
+
+    @property
+    def filepath(self) -> Path:
+        return (self.DIR_API / self.interval / self.instrument_id).with_suffix('.csv')
 
     async def _read(self, from_: datetime, to: datetime, interval: CandleInterval) -> AnyCandles:
         candles = self.CANDLES()
