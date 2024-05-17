@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import ClassVar, TypeVar
+from typing import ClassVar, TypeVar, Callable
 import logging
 
 import aiofiles
@@ -22,9 +22,6 @@ Interval = TypeVar('Interval')
 
 
 class _CSVCandles(ABC):
-    # CANDLE: ClassVar[AnyCandle]
-    # CANDLES: ClassVar[AnyCandles]
-    # COLUMNS: ClassVar[tuple]
     DELIMITER = ';'
     NEW_LINE = '\n'
 
@@ -47,13 +44,7 @@ class _CSVCandles(ABC):
     @classmethod
     @property
     @abstractmethod
-    def COLUMNS(cls) -> tuple:
-        raise NotImplementedError
-
-    @classmethod
-    @property
-    @abstractmethod
-    def DIR_API(cls) -> str:
+    def COLUMNS(cls) -> dict[str, Callable]:
         raise NotImplementedError
 
     @property
@@ -78,11 +69,6 @@ class _CSVCandles(ABC):
 
     @classmethod
     @abstractmethod
-    async def download_candles(cls, *args, **kwargs) -> AnyCandles:
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
     async def download_or_read(cls, *args, **kwargs) -> AnyCandles:
         raise NotImplementedError
 
@@ -92,20 +78,13 @@ class _CSVCandles(ABC):
         async with aiofiles.open(self.filepath, 'r') as f:
             data = await f.readlines()
 
-        columns = data[0].replace(self.NEW_LINE, '').split(self.DELIMITER)
-        data = data[1:]
-
-        for i, row in enumerate(data):
+        for i, row in enumerate(data[1:]):
             str_values = row.replace(self.NEW_LINE, '').split(self.DELIMITER)
             values = []
 
-            for column, value in zip(columns, str_values):
-                if column in ('open', 'high', 'low', 'close'):
-                    values.append(float(value))
-                elif column == 'volume':
-                    values.append(int(value))
-                elif column == 'time':
-                    values.append(datetime.fromisoformat(value))
+            for column, value in zip(self.COLUMNS.keys(), str_values):
+                func_convert = self.COLUMNS[column]
+                values.append(func_convert(value))
 
             candle = self.row2candle(values)
             if from_ <= candle.dt <= to:
